@@ -6,151 +6,18 @@
 
 // If you find this code useful please consider making a donation.
 
+using NUnit.Framework;
 using System;
 using System.Drawing;
 using System.IO;
-using NUnit.Framework;
+using System.Text;
 
 namespace Cyotek.Drawing.PaletteFormat.Tests
 {
   [TestFixture]
   public class FractintPaletteSerializerTests
   {
-    #region  Tests
-
-    [Test]
-    public void CanLoad_WithData_IsTrue()
-    {
-      // arrange
-      FractintPaletteSerializer target;
-      Stream data;
-      bool actual;
-
-      data = new MemoryStream(Data);
-
-      target = new FractintPaletteSerializer();
-
-      // act
-      actual = target.CanLoad(data);
-
-      // assert
-      Assert.IsTrue(actual);
-    }
-
-
-    [Test]
-    public void CanLoad_WithFileName_IsTrue()
-    {
-      // arrange
-      FractintPaletteSerializer target;
-      bool actual;
-      string fileName;
-
-      fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"data\default.map");
-
-      target = new FractintPaletteSerializer();
-
-      // act
-      actual = target.CanLoad(fileName);
-
-      // assert
-      Assert.IsTrue(actual);
-    }
-
-
-    [Test]
-    public void Extensions_ReturnsValues()
-    {
-      // arrange
-      FractintPaletteSerializer target;
-      string[] expected;
-      string[] actual;
-
-      expected = new[]
-                 {
-                   "map"
-                 };
-
-      target = new FractintPaletteSerializer();
-
-      // act
-      actual = target.Extensions;
-
-      // assert
-      CollectionAssert.AreEqual(expected, actual);
-    }
-
-    [Test]
-    public void Load_WithData_ReturnsPalette()
-    {
-      // arrange
-      FractintPaletteSerializer target;
-      Color[] expected;
-      Color[] actual;
-      Stream data;
-
-      data = new MemoryStream(Data);
-      expected = Sample;
-
-      target = new FractintPaletteSerializer();
-
-      // act
-      actual = target.Load(data);
-
-      // assert
-      CollectionAssert.AreEqual(expected, actual);
-    }
-
-    [Test]
-    public void Load_WithFileName_ReturnsPalette()
-    {
-      // arrange
-      FractintPaletteSerializer target;
-      Color[] expected;
-      Color[] actual;
-      string fileName;
-
-      fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"data\default.map");
-      expected = Sample;
-
-      target = new FractintPaletteSerializer();
-
-      // act
-      actual = target.Load(fileName);
-
-      // assert
-      CollectionAssert.AreEqual(expected, actual);
-    }
-
-    [Test]
-    public void Save_WritesValueData()
-    {
-      // arrange
-      FractintPaletteSerializer target;
-      MemoryStream output;
-      Color[] data;
-      byte[] expected;
-      byte[] actual;
-
-      expected = Data;
-      output = new MemoryStream();
-      data = Sample;
-
-      target = new FractintPaletteSerializer();
-
-      // act
-      target.Save(output, data);
-
-      // assert
-      actual = output.ToArray();
-      File.WriteAllBytes("T:\\test.map", actual);
-      File.WriteAllBytes("T:\\test2.map", expected);
-      CollectionAssert.AreEqual(expected, actual);
-    }
-
-    #endregion
-
-    #region Test Helpers
+    #region Private Properties
 
     private static byte[] Data
     {
@@ -601,6 +468,222 @@ namespace Cyotek.Drawing.PaletteFormat.Tests
       }
     }
 
-    #endregion
+    #endregion Private Properties
+
+    #region Public Methods
+
+    [Test]
+    public void CanLoad_WithData_IsTrue()
+    {
+      // arrange
+      FractintPaletteSerializer target;
+      Stream data;
+      bool actual;
+
+      data = new MemoryStream(Data);
+
+      target = new FractintPaletteSerializer();
+
+      // act
+      actual = target.CanLoad(data);
+
+      // assert
+      Assert.IsTrue(actual);
+    }
+
+    [Test]
+    public void CanLoad_WithFileName_IsTrue()
+    {
+      // arrange
+      FractintPaletteSerializer target;
+      bool actual;
+      string fileName;
+
+      fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"data\default.map");
+
+      target = new FractintPaletteSerializer();
+
+      // act
+      actual = target.CanLoad(fileName);
+
+      // assert
+      Assert.IsTrue(actual);
+    }
+
+    [Test]
+    public void CanLoad_WithInvalid_isFalse()
+    {
+      // arrange
+      FractintPaletteSerializer target;
+      bool actual;
+      byte[] data;
+
+      target = new FractintPaletteSerializer();
+
+      data = Encoding.ASCII.GetBytes("alpha beta gamma\r\ndelta epsilon zeta");
+
+      // act
+      actual = target.CanLoad(new MemoryStream(data));
+
+      // assert
+      Assert.IsFalse(actual);
+    }
+
+    [Test]
+    public void Extensions_ReturnsValues()
+    {
+      // arrange
+      FractintPaletteSerializer target;
+      string[] expected;
+      string[] actual;
+
+      expected = new[]
+                 {
+                   "map"
+                 };
+
+      target = new FractintPaletteSerializer();
+
+      // act
+      actual = target.Extensions;
+
+      // assert
+      CollectionAssert.AreEqual(expected, actual);
+    }
+
+    [Test]
+    public void Load_HandlesLessThan256Colors()
+    {
+      // arrange
+      FractintPaletteSerializer target;
+      Color[] expected;
+      Color[] actual;
+      string fileName;
+
+      fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"data\16.map");
+      expected = new Color[]
+      {
+        Color.FromArgb(0, 0, 0),
+        Color.FromArgb(0, 0, 168),
+        Color.FromArgb(0, 168, 0),
+        Color.FromArgb(0, 168, 168),
+        Color.FromArgb(168, 0, 0),
+        Color.FromArgb(168, 0, 168),
+        Color.FromArgb(168, 84, 0),
+        Color.FromArgb(168, 168, 168),
+        Color.FromArgb(84, 84, 84),
+        Color.FromArgb(84, 84, 252),
+        Color.FromArgb(84, 252, 84),
+        Color.FromArgb(84, 252, 252),
+        Color.FromArgb(252, 84, 84),
+        Color.FromArgb(252, 84, 252),
+        Color.FromArgb(252, 252, 84),
+        Color.FromArgb(252, 252, 252)
+      };
+
+      target = new FractintPaletteSerializer();
+
+      // act
+      actual = target.Load(fileName);
+
+      // assert
+      CollectionAssert.AreEqual(expected, actual);
+    }
+
+    [Test]
+    public void Load_HandlesMoreThan256Colors()
+    {
+      // arrange
+      FractintPaletteSerializer target;
+      Color[] expected;
+      Color[] actual;
+      string fileName;
+
+      fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"data\260.map");
+      expected = Sample;
+      Array.Resize(ref expected, 260);
+      expected[256] = Color.FromArgb(0, 0, 0);
+      expected[257] = Color.FromArgb(255, 0, 0);
+      expected[258] = Color.FromArgb(0, 255, 0);
+      expected[259] = Color.FromArgb(0, 0, 255);
+
+      target = new FractintPaletteSerializer();
+
+      // act
+      actual = target.Load(fileName);
+
+      // assert
+      CollectionAssert.AreEqual(expected, actual);
+    }
+
+    [Test]
+    public void Load_WithData_ReturnsPalette()
+    {
+      // arrange
+      FractintPaletteSerializer target;
+      Color[] expected;
+      Color[] actual;
+      Stream data;
+
+      data = new MemoryStream(Data);
+      expected = Sample;
+
+      target = new FractintPaletteSerializer();
+
+      // act
+      actual = target.Load(data);
+
+      // assert
+      CollectionAssert.AreEqual(expected, actual);
+    }
+
+    [Test]
+    public void Load_WithFileName_ReturnsPalette()
+    {
+      // arrange
+      FractintPaletteSerializer target;
+      Color[] expected;
+      Color[] actual;
+      string fileName;
+
+      fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"data\default.map");
+      expected = Sample;
+
+      target = new FractintPaletteSerializer();
+
+      // act
+      actual = target.Load(fileName);
+
+      // assert
+      CollectionAssert.AreEqual(expected, actual);
+    }
+
+    [Test]
+    public void Save_WritesValueData()
+    {
+      // arrange
+      FractintPaletteSerializer target;
+      MemoryStream output;
+      Color[] data;
+      byte[] expected;
+      byte[] actual;
+
+      expected = Data;
+      output = new MemoryStream();
+      data = Sample;
+
+      target = new FractintPaletteSerializer();
+
+      // act
+      target.Save(output, data);
+
+      // assert
+      actual = output.ToArray();
+      File.WriteAllBytes("T:\\test.map", actual);
+      File.WriteAllBytes("T:\\test2.map", expected);
+      CollectionAssert.AreEqual(expected, actual);
+    }
+
+    #endregion Public Methods
   }
 }

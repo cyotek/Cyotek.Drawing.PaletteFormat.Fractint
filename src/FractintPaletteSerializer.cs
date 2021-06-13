@@ -62,16 +62,50 @@ namespace Cyotek.Drawing.PaletteFormat
     public bool CanLoad(Stream stream)
     {
       bool result;
-      result = false;
 
       if (stream == null)
       {
         throw new ArgumentNullException(nameof(stream));
       }
 
-      // TODO
-
       result = true;
+
+      using (TextReader reader = new StreamReader(stream, _utf8WithoutBom))
+      {
+        CultureInfo culture;
+        string line;
+        int count;
+
+        culture = CultureInfo.InvariantCulture;
+        count = 0;
+
+        do
+        {
+          line = reader.ReadLine();
+
+          if (!string.IsNullOrEmpty(line))
+          {
+            string[] parts;
+
+            parts = line.Split(_sepratorChars, 4);
+
+            if (!int.TryParse(parts[0], NumberStyles.Integer, culture, out int _)
+                || !int.TryParse(parts[1], NumberStyles.Integer, culture, out int _)
+                || !int.TryParse(parts[2], NumberStyles.Integer, culture, out int _))
+            {
+              result = false;
+              break;
+            }
+
+            count++;
+          }
+        } while (!string.IsNullOrEmpty(line));
+
+        if (count == 0)
+        {
+          result = false;
+        }
+      }
 
       return result;
     }
@@ -131,7 +165,7 @@ namespace Cyotek.Drawing.PaletteFormat
 
             if (count == results.Length)
             {
-              Array.Resize(ref results, count);
+              Array.Resize(ref results, count * 2);
             }
 
             results[count] = Color.FromArgb(r, g, b);
