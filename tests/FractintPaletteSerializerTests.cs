@@ -679,8 +679,6 @@ namespace Cyotek.Drawing.PaletteFormat.Tests
 
       // assert
       actual = output.ToArray();
-      File.WriteAllBytes("T:\\test.map", actual);
-      File.WriteAllBytes("T:\\test2.map", expected);
       CollectionAssert.AreEqual(expected, actual);
     }
 
