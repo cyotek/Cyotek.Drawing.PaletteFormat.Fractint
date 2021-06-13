@@ -37,9 +37,9 @@
     <None Include="..\res\icon.png" Link="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-  <!--<ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
-  </ItemGroup>-->
+  </ItemGroup>
 
   <PropertyGroup>
     <!-- https://github.com/dotnet/msbuild/issues/1333#issuecomment-296346352 -->
