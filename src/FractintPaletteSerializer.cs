@@ -22,18 +22,33 @@ using System.Text;
 // * There must be a readable property named Extensions of type string[]
 // * To enable load support, the following are required
 // *   A method named CanLoad, that accepts a Stream and returns a bool
+//       e.g. bool CanLoad(Stream stream)
 // *   A method named Load, that accepts a Stream and returns Color[]
+//       e.g. Color[] Load(Stream stream)
 // * To enable save support, the following are required
 // *   A method named Save, that accepts a Stream and Color[] and returns void
+//       e.g. void Save(Stream stream, Color[] values)
 //
 // Methods and properties can be public or private.
 //
 // Cyotek Color Palette Editor 1.7 and above can load serialisers following the above rules,
 // older versions can only load ones that are explicitly inheriting a more complicated base class.
-// The ability to specific advanced functionality such as minimum/maximum counts, color types,
+// The ability to specific advanced functionality such as minimum/maximum counts, color spaces,
 // etc are not available from this simplified form.
+// 
+// Version 1.8 also allows swatch names to be loaded and saved via these simple classes.
+// 
+// To allow swatch names to be read, a method named Load, accepting Stream and out string[]
+// and returns Color[] must be exist
+//   e.g. Color[] Load(string fileName, out string[] names)
 //
-// The Load(String) and Save(String) overloads are convenience helpers for consumers of
+// To allow swatch names to be written, a method Save accepting Stream, Color[] and String[]
+// must exist
+//   e.g. Save(Stream stream, Color[] values, string[] names)
+//
+// The palette editor will prefer calling the extended versions if both are present in a class.
+//
+// The string based Load and Save overloads are convenience helpers for consumers of
 // the class and are not directly used by Cyotek Color Palette Editor.
 
 namespace Cyotek.Drawing.PaletteFormat
@@ -125,6 +140,11 @@ namespace Cyotek.Drawing.PaletteFormat
 
     public Color[] Load(Stream stream)
     {
+      return this.Load(stream, out string[] _);
+    }
+
+    public Color[] Load(Stream stream, out string[] names)
+    {
       int count;
       Color[] results;
 
@@ -138,6 +158,7 @@ namespace Cyotek.Drawing.PaletteFormat
 
       count = 0;
       results = new Color[256]; // default size is 256
+      names = new string[256];
 
       using (TextReader reader = new StreamReader(stream, _utf8WithoutBom))
       {
@@ -166,9 +187,14 @@ namespace Cyotek.Drawing.PaletteFormat
             if (count == results.Length)
             {
               Array.Resize(ref results, count * 2);
+              Array.Resize(ref names, count * 2);
             }
 
             results[count] = Color.FromArgb(r, g, b);
+            if (parts.Length == 4)
+            {
+              names[count] = parts[3];
+            }
 
             count++;
           }
@@ -177,6 +203,7 @@ namespace Cyotek.Drawing.PaletteFormat
         if (count < results.Length)
         {
           Array.Resize(ref results, count);
+          Array.Resize(ref names, count);
         }
       }
 
@@ -184,6 +211,11 @@ namespace Cyotek.Drawing.PaletteFormat
     }
 
     public Color[] Load(string fileName)
+    {
+      return this.Load(fileName, out string[] _);
+    }
+
+    public Color[] Load(string fileName, out string[] names)
     {
       if (string.IsNullOrEmpty(fileName))
       {
@@ -197,11 +229,16 @@ namespace Cyotek.Drawing.PaletteFormat
 
       using (Stream stream = File.OpenRead(fileName))
       {
-        return this.Load(stream);
+        return this.Load(stream, out names);
       }
     }
 
     public void Save(string fileName, Color[] values)
+    {
+      this.Save(fileName, values, null);
+    }
+
+    public void Save(string fileName, Color[] values, string[] names)
     {
       if (string.IsNullOrEmpty(fileName))
       {
@@ -215,11 +252,16 @@ namespace Cyotek.Drawing.PaletteFormat
 
       using (Stream stream = File.Create(fileName))
       {
-        this.Save(stream, values);
+        this.Save(stream, values, names);
       }
     }
 
     public void Save(Stream stream, Color[] values)
+    {
+      this.Save(stream, values, null);
+    }
+
+    public void Save(Stream stream, Color[] values, string[] names)
     {
       StringBuilder sb;
 
@@ -246,6 +288,11 @@ namespace Cyotek.Drawing.PaletteFormat
         sb.Append(value.G);
         sb.Append(' ');
         sb.Append(value.B);
+        if (names != null && names.Length >= i)
+        {
+          sb.Append(' ');
+          sb.Append(names[i]);
+        }
         sb.AppendLine();
       }
 

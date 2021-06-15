@@ -468,6 +468,58 @@ namespace Cyotek.Drawing.PaletteFormat.Tests
       }
     }
 
+    private static Color[] Sample16
+    {
+      get
+      {
+        return new[]
+        {
+          Color.FromArgb(0, 0, 0),
+          Color.FromArgb(0, 0, 168),
+          Color.FromArgb(0, 168, 0),
+          Color.FromArgb(0, 168, 168),
+          Color.FromArgb(168, 0, 0),
+          Color.FromArgb(168, 0, 168),
+          Color.FromArgb(168, 84, 0),
+          Color.FromArgb(168, 168, 168),
+          Color.FromArgb(84, 84, 84),
+          Color.FromArgb(84, 84, 252),
+          Color.FromArgb(84, 252, 84),
+          Color.FromArgb(84, 252, 252),
+          Color.FromArgb(252, 84, 84),
+          Color.FromArgb(252, 84, 252),
+          Color.FromArgb(252, 252, 84),
+          Color.FromArgb(252, 252, 252)
+        };
+      }
+    }
+
+    private static string[] Sample16Names
+    {
+      get
+      {
+        return new[]
+        {
+          "        Alpha",
+          "      Beta",
+          "      Gamma",
+          "    Delta",
+          "      Epsilon",
+          "    Zeta",
+          "     Eta",
+          "  Theta",
+          "     Iota",
+          "    Kappa",
+          "    Lambda",
+          "   Mu",
+          "    Nu",
+          "   Xi",
+          "   Omnicron",
+          "  Pi"
+        };
+      }
+    }
+
     #endregion Private Properties
 
     #region Public Methods
@@ -561,25 +613,7 @@ namespace Cyotek.Drawing.PaletteFormat.Tests
       string fileName;
 
       fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"data\16.map");
-      expected = new Color[]
-      {
-        Color.FromArgb(0, 0, 0),
-        Color.FromArgb(0, 0, 168),
-        Color.FromArgb(0, 168, 0),
-        Color.FromArgb(0, 168, 168),
-        Color.FromArgb(168, 0, 0),
-        Color.FromArgb(168, 0, 168),
-        Color.FromArgb(168, 84, 0),
-        Color.FromArgb(168, 168, 168),
-        Color.FromArgb(84, 84, 84),
-        Color.FromArgb(84, 84, 252),
-        Color.FromArgb(84, 252, 84),
-        Color.FromArgb(84, 252, 252),
-        Color.FromArgb(252, 84, 84),
-        Color.FromArgb(252, 84, 252),
-        Color.FromArgb(252, 252, 84),
-        Color.FromArgb(252, 252, 252)
-      };
+      expected = FractintPaletteSerializerTests.Sample16;
 
       target = new FractintPaletteSerializer();
 
@@ -611,6 +645,27 @@ namespace Cyotek.Drawing.PaletteFormat.Tests
 
       // act
       actual = target.Load(fileName);
+
+      // assert
+      CollectionAssert.AreEqual(expected, actual);
+    }
+
+    [Test]
+    public void Load_HandlesNames()
+    {
+      // arrange
+      FractintPaletteSerializer target;
+      string[] expected;
+      string fileName;
+
+      fileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"data\16.map");
+
+      expected = FractintPaletteSerializerTests.Sample16Names;
+
+      target = new FractintPaletteSerializer();
+
+      // act
+      target.Load(fileName, out string[] actual);
 
       // assert
       CollectionAssert.AreEqual(expected, actual);
@@ -655,6 +710,48 @@ namespace Cyotek.Drawing.PaletteFormat.Tests
       actual = target.Load(fileName);
 
       // assert
+      CollectionAssert.AreEqual(expected, actual);
+    }
+
+    [Test]
+    public void Save_WritesNames()
+    {
+      // arrange
+      FractintPaletteSerializer target;
+      MemoryStream output;
+      Color[] data;
+      string[] names;
+      string expected;
+      string actual;
+
+      expected = @"0 0 0         Alpha
+0 0 168       Beta
+0 168 0       Gamma
+0 168 168     Delta
+168 0 0       Epsilon
+168 0 168     Zeta
+168 84 0      Eta
+168 168 168   Theta
+84 84 84      Iota
+84 84 252     Kappa
+84 252 84     Lambda
+84 252 252    Mu
+252 84 84     Nu
+252 84 252    Xi
+252 252 84    Omnicron
+252 252 252   Pi
+";
+      output = new MemoryStream();
+      data = FractintPaletteSerializerTests.Sample16;
+      names = FractintPaletteSerializerTests.Sample16Names;
+
+      target = new FractintPaletteSerializer();
+
+      // act
+      target.Save(output, data, names);
+
+      // assert
+      actual = Encoding.UTF8.GetString(output.ToArray());
       CollectionAssert.AreEqual(expected, actual);
     }
 
